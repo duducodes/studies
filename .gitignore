@@ -58,3 +58,4 @@ calculator/node_modules/
 exercicios/node_modules/
 mines/node_modules/
 tasks-backend/node_modules/
+.env
