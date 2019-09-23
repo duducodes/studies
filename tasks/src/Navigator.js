@@ -5,11 +5,11 @@ import Auth from './screens/Auth'
 
 const MainRoutes = createSwitchNavigator({
     Auth:{
-        
+        name:'Auth',
         screen: Auth
     },
     Home :{
-        
+        name:'Home',
         screen: Agenda
     }
 })

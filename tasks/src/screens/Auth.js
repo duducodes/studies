@@ -1,6 +1,7 @@
 import React , {Component} from 'react'
 import {StyleSheet, Text, TextInput,View,ImageBackground,TouchableOpacity,Alert} from 'react-native'
-import AtuhInput from '../components/AuthInput'
+import axios from 'axios'
+import {server,showError} from '../common'
 import commonStyles from '../commonStyles'
 import backgroundImage from '../../assets/imgs/login.jpg'
 import AuthInput from '../components/AuthInput'
@@ -15,11 +16,31 @@ export default class Auth extends Component{
         confirmPassword:'',
     }
 
-    siginOrSignup = ()=>{
+    siginOrSignup = async()=>{
         if(this.state.stageNew){
-            Alert.alert('Sucesso!','Criar Conta')
+           try{
+               await axios.post(`${server}/signup`, {
+                   name:this.state.name,
+                   email:this.state.email,
+                   password:this.state.password,
+                   confirmPassword:this.state.confirmPassword
+               })
+               Alert.alert('SUcesso!' ,'Usuário cadastrado!')
+               this.setState({stageNew :false})
+           }catch(err){
+               showError(err)
+           }
         }else{
-            Alert.alert('Sucesso!','Logar')
+            try{
+                const res = await axios.post(`${server}/signin` ,{
+                    email:this.state.email,
+                    password: this.state.password
+                })
+                axios.defaults.headers.common['Authorization'] = `bearer ${res.data.token}`
+                this.props.navigation.navigate('Home')
+            }catch(err){
+                showError(err)
+            }
         }
     }
 
