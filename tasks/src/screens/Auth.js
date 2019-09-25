@@ -16,36 +16,54 @@ export default class Auth extends Component{
         confirmPassword:'',
     }
 
-    siginOrSignup = async()=>{
+    signIn = async () =>{
+        try{
+            const res = await axios.post(`${server}/signin` ,{
+                email:this.state.email,
+                password: this.state.password
+            })
+            axios.defaults.headers.common['Authorization'] = `bearer ${res.data.token}`
+            this.props.navigation.navigate('Home')
+        }catch(err){
+            showError(err)
+        }
+    }
+
+     signUp = async ()=>{
+        try{
+            await axios.post(`${server}/signup`, {
+                name:this.state.name,
+                email:this.state.email,
+                password:this.state.password,
+                confirmPassword:this.state.confirmPassword
+            })
+            Alert.alert('SUcesso!' ,'Usuário cadastrado!')
+            this.setState({stageNew :false})
+        }catch(err){
+            showError(err)
+        }
+     }
+     
+    siginOrSignup = ()=>{
         if(this.state.stageNew){
-           try{
-               await axios.post(`${server}/signup`, {
-                   name:this.state.name,
-                   email:this.state.email,
-                   password:this.state.password,
-                   confirmPassword:this.state.confirmPassword
-               })
-               Alert.alert('SUcesso!' ,'Usuário cadastrado!')
-               this.setState({stageNew :false})
-           }catch(err){
-               showError(err)
-           }
+            this.signUp()
         }else{
-            try{
-                const res = await axios.post(`${server}/signin` ,{
-                    email:this.state.email,
-                    password: this.state.password
-                })
-                axios.defaults.headers.common['Authorization'] = `bearer ${res.data.token}`
-                this.props.navigation.navigate('Home')
-            }catch(err){
-                showError(err)
-            }
+            this.signIn()
         }
     }
 
     render(){
 
+        const validations = []
+        validations.push(this.state.email && this.state.email.includes('@'))
+        validations.push(this.state.password && this.state.password.length >=6)
+        if(this.state.stageNew){
+            validations.push(this.state.name && this.state.name.trim())
+            validations.push(this.state.confirmPassword)
+            validations.push(this.state.confirmPassword === this.state.password)
+        }
+        
+        const validForm = validations.reduce((all,v) => all && v)
         return (
             <ImageBackground source ={backgroundImage} style ={styles.background}>
                 <Text sytle={styles.title} >Tasks</Text>
@@ -74,8 +92,9 @@ export default class Auth extends Component{
                         value={this.state.confirmPassword}
                         onChangeText ={confirmPassword =>this.setState({confirmPassword})}/>}
 
-                    <TouchableOpacity onPress={this.siginOrSignup}>
-                        <View style={styles.button}>
+                    <TouchableOpacity  disabled = {!validForm}
+                    onPress={this.siginOrSignup}>
+                        <View style={[styles.button, !validForm ? {backgroundColor :'#AAA'} : {}]}>
                             <Text style={styles.buttonText}>
                                 {this.state.stageNew? 'Registrar':'Entrar'}
                             </Text>
