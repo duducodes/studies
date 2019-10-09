@@ -8,6 +8,9 @@ import Task from '../components/Task'
 import  Icon from 'react-native-vector-icons/FontAwesome'
 import ActionButton from 'react-native-action-button'
 import AddTask from './AddTask'
+import axios from 'axios'
+import {server,showError} from '../common'
+
 export default class  Agenda extends Component {
     state = {
         tasks:[],
@@ -16,21 +19,33 @@ export default class  Agenda extends Component {
         showAddTask : false,
     }
 
-    addTask = task =>{
-        const tasks = [...this.state.tasks]
-        tasks.push({
-            id :Math.random(),
-            desc: task.desc,
-            estimateAt: task.data,
-            doneAt:null,
-        })
-        this.setState({tasks,showAddTask:false},this.filterTasks)
+    addTask =  async task =>{
+       console.log(task.doneAt)
+     try{
+         await axios.post(`${server}/tasks` , {
+             desc: task.desc,
+             estimateAt:task.date
+         })
+        let tasks = [...this.state.tasks]
+         tasks.push(task)
+         this.setState({tasks})
+         // showAddtask :false esconde a tela de modal
+         this.setState({showAddTask :false},this.filterTasks)
+     }catch(err){
+        showError(err)
+      }
     }
-    deleteTask = id =>{
-        const tasks = this.state.tasks.filter(task => task.id !==id)
-        this.setState({tasks},this.filterTasks)
+    deleteTask =  async id =>{
+       try{
+           await axios.delete(`${server}/tasks/${id}`)
+           await this.loadTasks()
+       }
+       catch(err){
+        showError(err)
+        }
     }
-    filterTasks = () =>{
+
+    filterTasks =  () =>{
         let visibleTasks = null
         if(this.state.showDoneTask){
             visibleTasks = [...this.state.tasks]
@@ -39,7 +54,7 @@ export default class  Agenda extends Component {
             visibleTasks = this.state.tasks.filter(pending)
         }
         this.setState({visibleTasks})
-        AsyncStorage.setItem('tasks',JSON.stringify( this.state.tasks))
+      
     }
 
     togleFilter = () =>{
@@ -47,20 +62,28 @@ export default class  Agenda extends Component {
     }
 
     componentDidMount= async () =>{
-        const data = await  AsyncStorage.getItem('tasks')
-        const tasks = JSON.parse(data) || []
-        this.setState({tasks},this.filterTasks)
+      this.loadTasks()
         
     }
-    toogleTask = id =>{
-        const tasks = [...this.state.tasks]
-        tasks.forEach(task =>{
-            if(task.id ===id){
-                task.doneAt = task.doneAt ? null: new Date()
-            }
-        })
-        this.setState({tasks},this.filterTasks)
+    toogleTask = async id =>{
+       try{
+           await axios.put(`${server}/tasks/${id}/toggle`)
+           await this.loadTasks()
+       }catch(err){
+           showError(err)
+       }
     }
+
+    loadTasks =  async() =>{
+        try{ 
+            const maxDate = moment().format('YYYY-MM-DD 23:59')
+            const res =  await axios.get(`${server}/tasks?date=${maxDate}`)
+            this.setState({tasks: res.data},this.filterTasks)
+        }catch (err) {
+            showError(err)
+        }
+    }
+
     render(){
         return (
             <View style = {styles.container}>
