@@ -13,7 +13,7 @@ import {
 import moment from 'moment'
 import commonStyles from '../commonStyles'
 
-const initialState ={ desc:'', data : new Date()}
+
 export default class AddTask extends Component {
     constructor(props) {
         super(props)
@@ -33,7 +33,7 @@ export default class AddTask extends Component {
         }
         const data  ={...this.state}
         this.props.onSave(data)
-        this.setState({...initialState})
+       
     }
     handleDateAndroidChanged = () => {
         DatePickerAndroid.open({
